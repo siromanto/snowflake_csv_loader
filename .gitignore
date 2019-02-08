@@ -39,5 +39,6 @@ coverage.xml
 # Ignore docker-compose folders
 api_dockerdata/
 
-# Ignore config
+# Ignore config and data
 configs/config.py
+data
