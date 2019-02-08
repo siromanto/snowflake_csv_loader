@@ -26,7 +26,7 @@ def run():
 
         cs.execute(
             "CREATE OR REPLACE TABLE "
-            "LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY({})".format(config.COMPAIN_PERFORMANCE_DB_COLUMNS))
+            "LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY({})".format(config.AD_PERFORMANCE_DB_COLUMNS))
 
         print(f'Database LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY successfully created or cleared')
     finally:

@@ -68,6 +68,8 @@ class Transform:
             self.check_df_params(df, 'CONVERSION_RATE', case='TRANSFORM_PERCENTS')
             self.check_df_params(df, 'LEAD_FORM_COMPLETION_RATE', case='TRANSFORM_PERCENTS')
             self.check_df_params(df, 'TOTAL_BUDGET', case='TRANSFORM_FLOAT')
+            self.check_df_params(df, 'AD_HEADLINE', case='TRANSFORM_QUOTES')
+            self.check_df_params(df, 'DSC_NAME', case='TRANSFORM_QUOTES')
 
     def check_df_params(self, df, param, case=None):
         if param in df:
@@ -79,6 +81,8 @@ class Transform:
                 df[param] = df[param].apply(lambda x: x.replace('%', '') if isinstance(x, str) else x)
             elif case == 'TRANSFORM_FLOAT':
                 df[param] = df[param].apply(lambda x: x.replace(',', '') if isinstance(x, str) else x)
+            elif case == 'TRANSFORM_QUOTES':
+                df[param] = df[param].apply(lambda x: x.replace("’", '').replace("'", '') if isinstance(x, str) else x)
 
     def load_data(self, report_name, table_name):
         total_rows_count = 0
@@ -110,11 +114,11 @@ class Transform:
                         self.conn.rollback()
                         raise e
 
-                print(f'Finish with file ==> {file}, ROWS uploaded {rows}...')
+                print(f'Finish with file --- {file}, ROWS uploaded --- {rows}...')
                 total_rows_count += rows
         self.conn.cursor().close()
         self.conn.close()
-        print('Data imported successfully, total rows load --- {}')
+        print('Data imported successfully, total rows load --- {total_rows_count}')
 
     def run(self, report_name='data'):
         self.get_csvs(report_name)
@@ -122,9 +126,12 @@ class Transform:
     def load(self, report_name='data', table_name=None):
         self.load_data(report_name, table_name)
 
+
 if __name__ == '__main__':
     # Transform(config).run(report_name='campaign_performance')
     # Transform(config).load(report_name='campaign_performance', table_name='LINKEDIN_CAMPAIGN_PERFORMANCE_TRAFFICBYDAY')
-    Transform(config).run(report_folder='ad_performance')
-    # Transform(config).load(report_name='ad_performance', table_name='AD_PERFORMANCE_DB_COLUMNS')
+
+    Transform(config).run(report_name='ad_performance')
+    # Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
+    Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
 
