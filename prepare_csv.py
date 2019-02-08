@@ -7,18 +7,8 @@ from configs import config, helpers
 
 
 class PerformCsv:
-    def __init__(self, config):
-        self.config = config
-
-    def create_connection(self):
-        conn = helpers.establish_db_conn(
-            self.config.DB_USERNAME,
-            self.config.DB_PASSWORD,
-            self.config.DB_ACCOUNT,
-            self.config.DB,
-            self.config.WAREHOUSE
-        )
-        return conn
+    def __init__(self, con_config):
+        self.config = con_config
 
     def parse_columns_names(self, headers):
         return [n.replace('(', '').replace(')', '').replace(" ", "_").replace("-", "_").upper() for n in headers]
@@ -56,6 +46,6 @@ class PerformCsv:
 
 
 if __name__ == '__main__':
-    # PerformCsv(config).run(report_folder='campaign_performance')
-    PerformCsv(config).run(report_folder='ad_performance')
+    PerformCsv(config).run(report_folder='campaign_performance')
+    # PerformCsv(config).run(report_folder='ad_performance')
 

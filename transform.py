@@ -39,25 +39,35 @@ class Transform:
                 print(f'Working with file {file} ===>')
                 df = pd.read_csv(f'{os.getcwd()}/data/clear_{report_name}/{file}')
 
-                self.transform_csv_fields(df)
+                self.transform_csv_fields(df, case=report_name)
 
                 df.to_csv(f'{os.getcwd()}/data/to_load_{report_name}/to_load_{file}', index=False, encoding='utf-8')
 
                 print(f'DONE === {file}')
         print('DONE')
 
-    def transform_csv_fields(self, df):
-        self.check_df_params(df, 'START_DATE_IN_UTC', case='TRANSFORM_DATA')
-        self.check_df_params(df, 'CAMPAIGN_GROUP_START_DATE', case='TRANSFORM_DATA')
-        self.check_df_params(df, 'CAMPAIGN_GROUP_END_DATE', case='TRANSFORM_DATA')
-        self.check_df_params(df, 'CLICK_THROUGH_RATE', case='TRANSFORM_PERCENTS')
-        self.check_df_params(df, 'ENGAGEMENT_RATE', case='TRANSFORM_PERCENTS')
-        self.check_df_params(df, 'OPEN_RATE', case='TRANSFORM_PERCENTS')
-        self.check_df_params(df, 'CLICK_THROUGH_RATE_SPONSORED_INMAIL', case='TRANSFORM_PERCENTS')
-        self.check_df_params(df, 'CONVERSION_RATE', case='TRANSFORM_PERCENTS')
-        self.check_df_params(df, 'LEAD_FORM_COMPLETION_RATE', case='TRANSFORM_PERCENTS')
-        self.check_df_params(df, 'TOTAL_BUDGET', case='TRANSFORM_FLOAT')
-        self.check_df_params(df, 'CAMPAIGN_GROUP_TOTAL_BUDGET', case='TRANSFORM_FLOAT')
+    def transform_csv_fields(self, df, case):
+        if case == 'campaign_performance':
+            self.check_df_params(df, 'START_DATE_IN_UTC', case='TRANSFORM_DATA')
+            self.check_df_params(df, 'CAMPAIGN_GROUP_START_DATE', case='TRANSFORM_DATA')
+            self.check_df_params(df, 'CAMPAIGN_GROUP_END_DATE', case='TRANSFORM_DATA')
+            self.check_df_params(df, 'CLICK_THROUGH_RATE', case='TRANSFORM_PERCENTS')
+            self.check_df_params(df, 'ENGAGEMENT_RATE', case='TRANSFORM_PERCENTS')
+            self.check_df_params(df, 'OPEN_RATE', case='TRANSFORM_PERCENTS')
+            self.check_df_params(df, 'CLICK_THROUGH_RATE_SPONSORED_INMAIL', case='TRANSFORM_PERCENTS')
+            self.check_df_params(df, 'CONVERSION_RATE', case='TRANSFORM_PERCENTS')
+            self.check_df_params(df, 'LEAD_FORM_COMPLETION_RATE', case='TRANSFORM_PERCENTS')
+            self.check_df_params(df, 'TOTAL_BUDGET', case='TRANSFORM_FLOAT')
+            self.check_df_params(df, 'CAMPAIGN_GROUP_TOTAL_BUDGET', case='TRANSFORM_FLOAT')
+        elif case == 'ad_performance':
+            self.check_df_params(df, 'START_DATE_IN_UTC', case='TRANSFORM_DATA')
+            self.check_df_params(df, 'CLICK_THROUGH_RATE', case='TRANSFORM_PERCENTS')
+            self.check_df_params(df, 'ENGAGEMENT_RATE', case='TRANSFORM_PERCENTS')
+            self.check_df_params(df, 'OPEN_RATE', case='TRANSFORM_PERCENTS')
+            self.check_df_params(df, 'CLICK_THROUGH_RATE_SPONSORED_INMAIL', case='TRANSFORM_PERCENTS')
+            self.check_df_params(df, 'CONVERSION_RATE', case='TRANSFORM_PERCENTS')
+            self.check_df_params(df, 'LEAD_FORM_COMPLETION_RATE', case='TRANSFORM_PERCENTS')
+            self.check_df_params(df, 'TOTAL_BUDGET', case='TRANSFORM_FLOAT')
 
     def check_df_params(self, df, param, case=None):
         if param in df:
@@ -71,14 +81,17 @@ class Transform:
                 df[param] = df[param].apply(lambda x: x.replace(',', '') if isinstance(x, str) else x)
 
     def load_data(self, report_name, table_name):
+        total_rows_count = 0
+
         for file in os.listdir(f'{os.getcwd()}/data/to_load_{report_name}'):
             if file.endswith('.csv'):
                 print(f'Try to load file: {file} ===>')
                 print(f'Copy into table {table_name}...')
+                rows = 0
 
                 df = pd.read_csv(f'{os.getcwd()}/data/to_load_{report_name}/{file}')
                 df = df.fillna(0)
-                df = df.where(pd.notnull(df), '')
+                # df = df.where(pd.notnull(df), '')
 
                 heads = ','.join(list(df))
 
@@ -91,26 +104,27 @@ class Transform:
                         self.conn.cursor().execute(
                             "INSERT INTO {}({}) "
                             "VALUES ({})".format(table_name, heads, row))
+                        rows += 1
 
                     except Exception as e:
                         self.conn.rollback()
                         raise e
 
-                print(f'Finish with file ==> {file}...')
+                print(f'Finish with file ==> {file}, ROWS uploaded {rows}...')
+                total_rows_count += rows
         self.conn.cursor().close()
         self.conn.close()
-        print('Data imported successfully')
+        print('Data imported successfully, total rows load --- {}')
 
-
-
-    def run(self, report_name='data', table_name=None):
+    def run(self, report_name='data'):
         self.get_csvs(report_name)
 
     def load(self, report_name='data', table_name=None):
         self.load_data(report_name, table_name)
 
 if __name__ == '__main__':
-    Transform(config).run(report_name='campaign_performance', table_name='LINKEDIN_CAMPAIGN_PERFORMANCE_TRAFFICBYDAY')
-    Transform(config).load(report_name='campaign_performance', table_name='LINKEDIN_CAMPAIGN_PERFORMANCE_TRAFFICBYDAY')
-    # Transform(config).run(report_folder='clear_ad_performance')
+    # Transform(config).run(report_name='campaign_performance')
+    # Transform(config).load(report_name='campaign_performance', table_name='LINKEDIN_CAMPAIGN_PERFORMANCE_TRAFFICBYDAY')
+    Transform(config).run(report_folder='ad_performance')
+    # Transform(config).load(report_name='ad_performance', table_name='AD_PERFORMANCE_DB_COLUMNS')
 
