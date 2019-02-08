@@ -1,0 +1,40 @@
+#----------------------------------------------------------------------------
+# Ignore these files when commiting to a git repository.
+#
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+#
+#----------------------------------------------------------------------------
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Distribution / packaging
+.Python
+venv/
+.venv/
+build/
+dist/
+downloads/
+var/
+.installed.cfg
+
+# DB files
+*.db
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+
+# MacOs and PyCharm files
+.DS_Store
+.idea
+
+# Ignore docker-compose folders
+api_dockerdata/
