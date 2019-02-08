@@ -27,7 +27,7 @@ def run():
 
         cs.execute(
             "CREATE OR REPLACE TABLE "
-            "LINKEDIN_TEST_TABLE({})".format(config.COMPAIN_PERFORMANCE_DB_COLUMNS))
+            "LINKEDIN_TEST_TABLE({})".format(config.AD_PERFORMANCE_DB_COLUMNS))
 
         print(f'Database LINKEDIN_TEST_TABLE successfully created or cleared')
     finally:

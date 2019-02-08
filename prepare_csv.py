@@ -56,6 +56,6 @@ class PerformCsv:
 
 
 if __name__ == '__main__':
-    PerformCsv(config).run(report_folder='campaign_performance')
-    # PerformCsv(config).run(report_folder='ad_performance')
+    # PerformCsv(config).run(report_folder='campaign_performance')
+    PerformCsv(config).run(report_folder='ad_performance')
 
