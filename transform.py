@@ -68,6 +68,7 @@ class Transform:
             self.check_df_params(df, 'CONVERSION_RATE', case='TRANSFORM_PERCENTS')
             self.check_df_params(df, 'LEAD_FORM_COMPLETION_RATE', case='TRANSFORM_PERCENTS')
             self.check_df_params(df, 'TOTAL_BUDGET', case='TRANSFORM_FLOAT')
+            self.check_df_params(df, 'AD_INTRODUCTION_TEXT', case='TRANSFORM_QUOTES')
             self.check_df_params(df, 'AD_HEADLINE', case='TRANSFORM_QUOTES')
             self.check_df_params(df, 'DSC_NAME', case='TRANSFORM_QUOTES')
 
@@ -118,7 +119,7 @@ class Transform:
                 total_rows_count += rows
         self.conn.cursor().close()
         self.conn.close()
-        print('Data imported successfully, total rows load --- {total_rows_count}')
+        print(f"Data imported successfully, total rows load --- {total_rows_count}")
 
     def run(self, report_name='data'):
         self.get_csvs(report_name)
@@ -131,7 +132,7 @@ if __name__ == '__main__':
     # Transform(config).run(report_name='campaign_performance')
     # Transform(config).load(report_name='campaign_performance', table_name='LINKEDIN_CAMPAIGN_PERFORMANCE_TRAFFICBYDAY')
 
-    Transform(config).run(report_name='ad_performance')
-    # Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
-    Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
+    # Transform(config).run(report_name='ad_performance')
+    Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
+    # Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
 
