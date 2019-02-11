@@ -15,6 +15,7 @@ from configs import config, helpers
 
 INPUT_DATETIME_FORMAT = '%m/%d/%Y'
 OUTPUT_DATETIME_FORMAT = "%Y-%m-%d"
+CHUNKS_VALUE = 4
 
 
 class Transform:
@@ -121,11 +122,89 @@ class Transform:
         self.conn.close()
         print(f"Data imported successfully, total rows load --- {total_rows_count}")
 
+    def _cleanup_data(self, table_name):
+        self.conn.cursor().execute('DELETE FROM {}'.format(table_name))
+
+    def _execute_queries_for_upload(self, report_path, storage_path, table_name):
+        self.conn.cursor().execute('PUT \'file://{}\' \'{}\''.format(report_path, storage_path))
+        self.conn.cursor().execute('COPY INTO {} FROM \'{}\' '
+                                   'FILE_FORMAT=(SKIP_HEADER=1 FIELD_OPTIONALLY_ENCLOSED_BY=\'"\' ERROR_ON_COLUMN_COUNT_MISMATCH=false)'.format(table_name, storage_path))
+        self.conn.cursor().execute('REMOVE \'{}\''.format(storage_path))
+
+    def load_raw_data_from_csv(self, report_name, table_name):
+
+        for file in os.listdir(f'{os.getcwd()}/data/to_load_{report_name}'):
+            if file.endswith('.csv'):
+                print(f'Try to load file: {file} ===>')
+
+                file_path = f"{os.getcwd()}/data/to_load_{report_name}/{file}"
+
+                curr = self.conn.cursor()
+                storage_path = '@%{}/{}'.format(table_name, file)
+
+                try:
+                    curr.execute('BEGIN')
+                    # self._cleanup_data(curr, table_name)
+                    self._execute_queries_for_upload(file_path, storage_path, table_name)
+                    curr.execute('COMMIT')
+
+                    print(f'Finish with file --- {file}...')
+                except Exception as e:
+                    print(e)
+
+        self.conn.cursor().close()
+        self.conn.close()
+        print(f"Data imported successfully")
+
+
+
+    def load_data_by_chunks(self, report_name, table_name):
+        total_rows_count = 0
+
+        for file in os.listdir(f'{os.getcwd()}/data/to_load_{report_name}'):
+
+
+
+            if file.endswith('.csv'):
+                print(f'Try to load file: {file} ===>')
+                print(f'Copy into table {table_name}...')
+
+                df = pd.read_csv(f'{os.getcwd()}/data/to_load_{report_name}/{file}')
+                df = df.fillna(0)
+                heads = ','.join(list(df))
+
+                print("Start uploading data....")
+                file_rows = 0
+
+                for part in helpers.get_data_by_chunks(range(len(df.index)), CHUNKS_VALUE):
+                    rows_list = [str(list(df.iloc[x])).replace("[", "(").replace("]", ")") for x in part]
+                    query = """,""".join(rows_list)
+
+                    try:
+                        self.conn.cursor().execute(
+                            "INSERT INTO {}({}) "
+                            "VALUES {}".format(table_name, heads, query))
+
+                        file_rows += CHUNKS_VALUE
+
+                    except Exception as e:
+                        self.conn.rollback()
+                        raise e
+
+                    print(f"CHUNK UPLOADED, file rows --- {file_rows}")
+
+                total_rows_count += file_rows
+
+        self.conn.cursor().close()
+        self.conn.close()
+        print(f"Data imported successfully, all rows --- total_rows_count")
+
     def run(self, report_name='data'):
         self.get_csvs(report_name)
 
     def load(self, report_name='data', table_name=None):
-        self.load_data(report_name, table_name)
+        # self.load_data_by_chunks(report_name, table_name)
+        self.load_raw_data_from_csv(report_name, table_name)
 
 
 if __name__ == '__main__':
@@ -133,6 +212,9 @@ if __name__ == '__main__':
     # Transform(config).load(report_name='campaign_performance', table_name='LINKEDIN_CAMPAIGN_PERFORMANCE_TRAFFICBYDAY')
 
     # Transform(config).run(report_name='ad_performance')
-    Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
+    # Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
     # Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
+
+    # Transform(config).load_raw_data_from_csv(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
+    Transform(config).load_raw_data_from_csv(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
 

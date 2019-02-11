@@ -54,4 +54,8 @@ def perform_db_routines(client_name, sql):
 
 # def create_table(name):
 
+def get_data_by_chunks(items_list, n):
+    for i in range(0, len(items_list), n):
+        yield items_list[i:i + n]
+
 
