@@ -101,7 +101,7 @@ if __name__ == '__main__':
     # Load(config).load(report_name='campaign_performance', table_name='LINKEDIN_CAMPAIGN_PERFORMANCE_TRAFFICBYDAY')
     # Load(config).load(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
     Load(config).load(report_name='aud_network_campaign_performance', table_name='LINKEDIN_AUD_NETWORK_COMPAIGN_PERFORMANCE_TRAFFICBYDAY')
-    # Load(config).load(report_name='aud_network_campaign_performance', table_name='LINKEDIN_AUD_NETWORK_COMPAIGN_PERFORMANCE_TRAFFICBYDAY')
+    Load(config).load(report_name='aud_network_ad_performance', table_name='LINKEDIN_AUD_NETWORK_AD_PERFORMANCE_TRAFFICBYDAY')
 
     # Load(config).load_raw_data_from_csv(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
 

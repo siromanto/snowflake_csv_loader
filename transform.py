@@ -77,7 +77,9 @@ class Transform:
         print('*' * 200)
 
     def transform_csv_fields(self, df, case):
-        if case == 'campaign_performance' or case == 'aud_network_campaign_performance':
+        if case == 'campaign_performance' \
+                or case == 'aud_network_campaign_performance' \
+                or case == 'aud_network_ad_performance':
             self.check_df_params(df, 'START_DATE_IN_UTC', case='TRANSFORM_DATA')
             self.check_df_params(df, 'CAMPAIGN_GROUP_START_DATE', case='TRANSFORM_DATA')
             self.check_df_params(df, 'CAMPAIGN_GROUP_END_DATE', case='TRANSFORM_DATA')
@@ -124,6 +126,6 @@ class Transform:
 if __name__ == '__main__':
     # Transform(config).run(report_name='campaign_performance')
     # Transform(config).run(report_name='ad_performance')
-    Transform(config).run(report_name='aud_network_campaign_performance')
-    # Transform(config).run(report_name='aud_network_ad_performance')
+    # Transform(config).run(report_name='aud_network_campaign_performance')
+    Transform(config).run(report_name='aud_network_ad_performance')
 
