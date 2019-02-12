@@ -1,18 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import csv
 import os
 import pandas as pd
-import datetime
 
 from configs import config, helpers
 
-INPUT_DATETIME_FORMAT = '%m/%d/%Y'
-OUTPUT_DATETIME_FORMAT = "%Y-%m-%d"
-CHUNKS_VALUE = 4
 
-
-class Transform:
+class Load:
 
     def __init__(self, con_config):
         self.config = con_config
@@ -27,61 +21,6 @@ class Transform:
             self.config.WAREHOUSE
         )
         return conn
-
-    # def get_csvs(self, report_name):
-    #     for file in os.listdir(f'{os.getcwd()}/data/clear_{report_name}'):
-    #         if not os.path.exists(f'data/to_load_{report_name}'):
-    #             os.makedirs(f'data/to_load_{report_name}')
-    #
-    #         if file.endswith('.csv'):
-    #             print(f'Working with file {file} ===>')
-    #             df = pd.read_csv(f'{os.getcwd()}/data/clear_{report_name}/{file}')
-    #
-    #             self.transform_csv_fields(df, case=report_name)
-    #
-    #             df.to_csv(f'{os.getcwd()}/data/to_load_{report_name}/to_load_{file}', index=False, encoding='utf-8')
-    #
-    #             print(f'DONE === {file}')
-    #     print('DONE')
-    #
-    # def transform_csv_fields(self, df, case):
-    #     if case == 'campaign_performance':
-    #         self.check_df_params(df, 'START_DATE_IN_UTC', case='TRANSFORM_DATA')
-    #         self.check_df_params(df, 'CAMPAIGN_GROUP_START_DATE', case='TRANSFORM_DATA')
-    #         self.check_df_params(df, 'CAMPAIGN_GROUP_END_DATE', case='TRANSFORM_DATA')
-    #         self.check_df_params(df, 'CLICK_THROUGH_RATE', case='TRANSFORM_PERCENTS')
-    #         self.check_df_params(df, 'ENGAGEMENT_RATE', case='TRANSFORM_PERCENTS')
-    #         self.check_df_params(df, 'OPEN_RATE', case='TRANSFORM_PERCENTS')
-    #         self.check_df_params(df, 'CLICK_THROUGH_RATE_SPONSORED_INMAIL', case='TRANSFORM_PERCENTS')
-    #         self.check_df_params(df, 'CONVERSION_RATE', case='TRANSFORM_PERCENTS')
-    #         self.check_df_params(df, 'LEAD_FORM_COMPLETION_RATE', case='TRANSFORM_PERCENTS')
-    #         self.check_df_params(df, 'TOTAL_BUDGET', case='TRANSFORM_FLOAT')
-    #         self.check_df_params(df, 'CAMPAIGN_GROUP_TOTAL_BUDGET', case='TRANSFORM_FLOAT')
-    #     elif case == 'ad_performance':
-    #         self.check_df_params(df, 'START_DATE_IN_UTC', case='TRANSFORM_DATA')
-    #         self.check_df_params(df, 'CLICK_THROUGH_RATE', case='TRANSFORM_PERCENTS')
-    #         self.check_df_params(df, 'ENGAGEMENT_RATE', case='TRANSFORM_PERCENTS')
-    #         self.check_df_params(df, 'OPEN_RATE', case='TRANSFORM_PERCENTS')
-    #         self.check_df_params(df, 'CLICK_THROUGH_RATE_SPONSORED_INMAIL', case='TRANSFORM_PERCENTS')
-    #         self.check_df_params(df, 'CONVERSION_RATE', case='TRANSFORM_PERCENTS')
-    #         self.check_df_params(df, 'LEAD_FORM_COMPLETION_RATE', case='TRANSFORM_PERCENTS')
-    #         self.check_df_params(df, 'TOTAL_BUDGET', case='TRANSFORM_FLOAT')
-    #         self.check_df_params(df, 'AD_INTRODUCTION_TEXT', case='TRANSFORM_QUOTES')
-    #         self.check_df_params(df, 'AD_HEADLINE', case='TRANSFORM_QUOTES')
-    #         self.check_df_params(df, 'DSC_NAME', case='TRANSFORM_QUOTES')
-    #
-    # def check_df_params(self, df, param, case=None):
-    #     if param in df:
-    #         if case == 'TRANSFORM_DATA':
-    #             df[param] = df[param].apply(
-    #                 lambda x: datetime.datetime.strptime(x, INPUT_DATETIME_FORMAT).strftime(OUTPUT_DATETIME_FORMAT) if isinstance(x, str) else '3000-01-01'
-    #             )
-    #         elif case == 'TRANSFORM_PERCENTS':
-    #             df[param] = df[param].apply(lambda x: x.replace('%', '') if isinstance(x, str) else x)
-    #         elif case == 'TRANSFORM_FLOAT':
-    #             df[param] = df[param].apply(lambda x: x.replace(',', '') if isinstance(x, str) else x)
-    #         elif case == 'TRANSFORM_QUOTES':
-    #             df[param] = df[param].apply(lambda x: x.replace("’", '').replace("'", '') if isinstance(x, str) else x)
 
     def load_data(self, report_name, table_name):
         total_rows_count = 0
@@ -145,7 +84,7 @@ class Transform:
                     self._execute_queries_for_upload(file_path, storage_path, table_name)
                     curr.execute('COMMIT')
 
-                    print(f'Finish with file --- {file}...')
+                    print(f'FINISH FILE LOADING...')
                 except Exception as e:
                     print(e)
 
@@ -153,23 +92,15 @@ class Transform:
         self.conn.close()
         print(f"Data imported successfully")
 
-    def run(self, report_name='data'):
-        self.get_csvs(report_name)
-
     def load(self, report_name='data', table_name=None):
         # self.load_data_by_chunks(report_name, table_name)
         self.load_raw_data_from_csv(report_name, table_name)
 
 
 if __name__ == '__main__':
-    # Transform(config).run(report_name='campaign_performance')
-    # Transform(config).load(report_name='campaign_performance', table_name='LINKEDIN_CAMPAIGN_PERFORMANCE_TRAFFICBYDAY')
+    # Load(config).load(report_name='campaign_performance', table_name='LINKEDIN_CAMPAIGN_PERFORMANCE_TRAFFICBYDAY')
+    # Load(config).load(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
 
-    Transform(config).run(report_name='ad_performance')
-    # Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
-    Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
-
-    # Transform(config).load_raw_data_from_csv(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
-    # Transform(config).load_raw_data_from_csv(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
+    Load(config).load_raw_data_from_csv(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
 
 

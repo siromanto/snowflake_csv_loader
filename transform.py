@@ -113,6 +113,6 @@ class Transform:
 
 
 if __name__ == '__main__':
-    Transform(config).run(report_name='campaign_performance')
-    # Transform(config).run(report_name='ad_performance')
+    # Transform(config).run(report_name='campaign_performance')
+    Transform(config).run(report_name='ad_performance')
 
