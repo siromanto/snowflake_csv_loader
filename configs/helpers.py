@@ -52,7 +52,10 @@ def perform_db_routines(client_name, sql):
         curr.close()
         conn.close()
 
-# def create_table(name):
+def print_header(name):
+    print('*' * 200)
+    print(f'PREPARE FILES TO LOAD --- {name.upper()}')
+    print('*' * 200)
 
 def get_data_by_chunks(items_list, n):
     for i in range(0, len(items_list), n):

@@ -7,45 +7,66 @@ import datetime
 
 from configs import config, helpers
 
-
-# TRANSFORM_DATA = lambda x: datetime.datetime.strptime(x, helpers.DATETIME_FORMAT)
-# TRANSFORM_PERCENTS = lambda x: x.replace('%', '')
-# TRANSFORM_FLOAT = lambda x: x.replace(',', '')
-
-
 INPUT_DATETIME_FORMAT = '%m/%d/%Y'
 OUTPUT_DATETIME_FORMAT = "%Y-%m-%d"
-CHUNKS_VALUE = 4
 
 
 class Transform:
-
     def __init__(self, con_config):
         self.config = con_config
-        self.conn = self.create_connection()
 
-    def create_connection(self):
-        conn = helpers.establish_db_conn(
-            self.config.DB_USERNAME,
-            self.config.DB_PASSWORD,
-            self.config.DB_ACCOUNT,
-            self.config.DATABASE,
-            self.config.WAREHOUSE
-        )
-        return conn
+    def parse_columns_names(self, headers):
+        return [n.replace('(', '').replace(')', '').replace(" ", "_").replace("-", "_").upper() for n in headers]
 
-    def get_csvs(self, report_name):
+    def transform_csvs_to_correct_format(self, report_name):
+        helpers.print_header('clear the raw csv file')
+
+        for file in os.listdir('{}/data/{}'.format(os.getcwd(), report_name)):
+            if not os.path.exists(f'data/clear_{report_name}'):
+                os.makedirs(f'data/clear_{report_name}')
+
+            if file.endswith('.csv'):
+                with open(f'data/{report_name}/{file}', 'r', newline='', encoding='utf-8-sig') as raw_csvfile, \
+                        open(f'data/clear_{report_name}/clear_{file}', mode='w', encoding='utf8') as clear_csv:
+
+                    print(f'Start working with file --- {file} ...')
+                    reader = csv.reader(raw_csvfile)
+
+                    for _ in range(5):  # pass 5 columns with info data
+                        next(reader)
+
+                    raw_headers = next(reader)
+                    clear_headers = self.parse_columns_names(raw_headers)
+                    writer = self.prepare_header_for_clear_csv(clear_csv, clear_headers)
+
+                    for raw_row in reader:
+                        row = dict(zip(clear_headers, raw_row))
+                        writer.writerow(row)
+
+                    print(f'NEW FILE IS CREATED ...')
+
+    def prepare_header_for_clear_csv(self, file, headers):
+        writer = csv.DictWriter(file, fieldnames=headers)
+        writer.writeheader()
+        return writer
+
+    def prepare_csvs_to_load(self, report_name):
+        helpers.print_header('transform csv file to load')
+
         for file in os.listdir(f'{os.getcwd()}/data/clear_{report_name}'):
+            if not os.path.exists(f'data/to_load_{report_name}'):
+                os.makedirs(f'data/to_load_{report_name}')
+
             if file.endswith('.csv'):
                 print(f'Working with file {file} ===>')
+
                 df = pd.read_csv(f'{os.getcwd()}/data/clear_{report_name}/{file}')
-
                 self.transform_csv_fields(df, case=report_name)
-
                 df.to_csv(f'{os.getcwd()}/data/to_load_{report_name}/to_load_{file}', index=False, encoding='utf-8')
 
-                print(f'DONE === {file}')
-        print('DONE')
+                print(f'DONE WITH FILE ...')
+
+        print('*' * 200)
 
     def transform_csv_fields(self, df, case):
         if case == 'campaign_performance':
@@ -86,135 +107,12 @@ class Transform:
             elif case == 'TRANSFORM_QUOTES':
                 df[param] = df[param].apply(lambda x: x.replace("’", '').replace("'", '') if isinstance(x, str) else x)
 
-    def load_data(self, report_name, table_name):
-        total_rows_count = 0
-
-        for file in os.listdir(f'{os.getcwd()}/data/to_load_{report_name}'):
-            if file.endswith('.csv'):
-                print(f'Try to load file: {file} ===>')
-                print(f'Copy into table {table_name}...')
-                rows = 0
-
-                df = pd.read_csv(f'{os.getcwd()}/data/to_load_{report_name}/{file}')
-                df = df.fillna(0)
-                # df = df.where(pd.notnull(df), '')
-
-                heads = ','.join(list(df))
-
-                print("Start uploading data....")
-                for i in range(len(df.index)):
-                    row = """,""".join("'{0}'".format(str(x)) for x in list(df.iloc[i]))
-                    print(f'Write row --- {i+1}, DATE --- {df["START_DATE_IN_UTC"][i]}, COMPANY --- {df["CAMPAIGN_NAME"][i]}')
-
-                    try:
-                        self.conn.cursor().execute(
-                            "INSERT INTO {}({}) "
-                            "VALUES ({})".format(table_name, heads, row))
-                        rows += 1
-
-                    except Exception as e:
-                        self.conn.rollback()
-                        raise e
-
-                print(f'Finish with file --- {file}, ROWS uploaded --- {rows}...')
-                total_rows_count += rows
-        self.conn.cursor().close()
-        self.conn.close()
-        print(f"Data imported successfully, total rows load --- {total_rows_count}")
-
-    def _cleanup_data(self, table_name):
-        self.conn.cursor().execute('DELETE FROM {}'.format(table_name))
-
-    def _execute_queries_for_upload(self, report_path, storage_path, table_name):
-        self.conn.cursor().execute('PUT \'file://{}\' \'{}\''.format(report_path, storage_path))
-        self.conn.cursor().execute('COPY INTO {} FROM \'{}\' '
-                                   'FILE_FORMAT=(SKIP_HEADER=1 FIELD_OPTIONALLY_ENCLOSED_BY=\'"\' ERROR_ON_COLUMN_COUNT_MISMATCH=false)'.format(table_name, storage_path))
-        self.conn.cursor().execute('REMOVE \'{}\''.format(storage_path))
-
-    def load_raw_data_from_csv(self, report_name, table_name):
-
-        for file in os.listdir(f'{os.getcwd()}/data/to_load_{report_name}'):
-            if file.endswith('.csv'):
-                print(f'Try to load file: {file} ===>')
-
-                file_path = f"{os.getcwd()}/data/to_load_{report_name}/{file}"
-
-                curr = self.conn.cursor()
-                storage_path = '@%{}/{}'.format(table_name, file)
-
-                try:
-                    curr.execute('BEGIN')
-                    # self._cleanup_data(curr, table_name)
-                    self._execute_queries_for_upload(file_path, storage_path, table_name)
-                    curr.execute('COMMIT')
-
-                    print(f'Finish with file --- {file}...')
-                except Exception as e:
-                    print(e)
-
-        self.conn.cursor().close()
-        self.conn.close()
-        print(f"Data imported successfully")
-
-
-
-    def load_data_by_chunks(self, report_name, table_name):
-        total_rows_count = 0
-
-        for file in os.listdir(f'{os.getcwd()}/data/to_load_{report_name}'):
-
-
-
-            if file.endswith('.csv'):
-                print(f'Try to load file: {file} ===>')
-                print(f'Copy into table {table_name}...')
-
-                df = pd.read_csv(f'{os.getcwd()}/data/to_load_{report_name}/{file}')
-                df = df.fillna(0)
-                heads = ','.join(list(df))
-
-                print("Start uploading data....")
-                file_rows = 0
-
-                for part in helpers.get_data_by_chunks(range(len(df.index)), CHUNKS_VALUE):
-                    rows_list = [str(list(df.iloc[x])).replace("[", "(").replace("]", ")") for x in part]
-                    query = """,""".join(rows_list)
-
-                    try:
-                        self.conn.cursor().execute(
-                            "INSERT INTO {}({}) "
-                            "VALUES {}".format(table_name, heads, query))
-
-                        file_rows += CHUNKS_VALUE
-
-                    except Exception as e:
-                        self.conn.rollback()
-                        raise e
-
-                    print(f"CHUNK UPLOADED, file rows --- {file_rows}")
-
-                total_rows_count += file_rows
-
-        self.conn.cursor().close()
-        self.conn.close()
-        print(f"Data imported successfully, all rows --- total_rows_count")
-
-    def run(self, report_name='data'):
-        self.get_csvs(report_name)
-
-    def load(self, report_name='data', table_name=None):
-        # self.load_data_by_chunks(report_name, table_name)
-        self.load_raw_data_from_csv(report_name, table_name)
+    def run(self, report_name):
+        self.transform_csvs_to_correct_format(report_name)
+        self.prepare_csvs_to_load(report_name)
 
 
 if __name__ == '__main__':
-    # Transform(config).run(report_name='campaign_performance')
-    # Transform(config).load(report_name='campaign_performance', table_name='LINKEDIN_CAMPAIGN_PERFORMANCE_TRAFFICBYDAY')
-
+    Transform(config).run(report_name='campaign_performance')
     # Transform(config).run(report_name='ad_performance')
-    # Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
-    # Transform(config).load(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
-
-    # Transform(config).load_raw_data_from_csv(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
-    Transform(config).load_raw_data_from_csv(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
 
