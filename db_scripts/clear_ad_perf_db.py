@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import snowflake.connector
+
 from configs import config
 
 

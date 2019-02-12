@@ -52,6 +52,7 @@ class Transform:
 
     def prepare_csvs_to_load(self, report_name):
         helpers.print_header('transform csv file to load')
+        dataframes = []
 
         for file in os.listdir(f'{os.getcwd()}/data/clear_{report_name}'):
             if not os.path.exists(f'data/to_load_{report_name}'):
@@ -62,9 +63,16 @@ class Transform:
 
                 df = pd.read_csv(f'{os.getcwd()}/data/clear_{report_name}/{file}')
                 self.transform_csv_fields(df, case=report_name)
-                df.to_csv(f'{os.getcwd()}/data/to_load_{report_name}/to_load_{file}', index=False, encoding='utf-8')
+                # df.to_csv(f'{os.getcwd()}/data/to_load_{report_name}/to_load_{file}', index=False, encoding='utf-8')
 
                 print(f'DONE WITH FILE ...')
+
+                dataframes.append(df)
+
+        # dataframes.to_csv(f'{os.getcwd()}/data/to_load_{report_name}/to_load_{report_name}', index=False, encoding='utf-8')
+        test_df = pd.concat(dataframes, sort=False, ignore_index=True)
+        test_df.to_csv(f'{os.getcwd()}/data/to_load_{report_name}/to_load_{report_name}.csv', index=False, encoding='utf-8')
+
 
         print('*' * 200)
 
@@ -113,6 +121,6 @@ class Transform:
 
 
 if __name__ == '__main__':
-    # Transform(config).run(report_name='campaign_performance')
+    Transform(config).run(report_name='campaign_performance')
     Transform(config).run(report_name='ad_performance')
 

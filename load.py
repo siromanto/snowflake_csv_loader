@@ -64,7 +64,7 @@ class Load:
     def _execute_queries_for_upload(self, report_path, storage_path, table_name):
         self.conn.cursor().execute('PUT \'file://{}\' \'{}\''.format(report_path, storage_path))
         self.conn.cursor().execute('COPY INTO {} FROM \'{}\' '
-                                   'FILE_FORMAT=(SKIP_HEADER=1 FIELD_OPTIONALLY_ENCLOSED_BY=\'"\' ERROR_ON_COLUMN_COUNT_MISMATCH=false)'.format(table_name, storage_path))
+                                   'FILE_FORMAT=(SKIP_HEADER=1 FIELD_OPTIONALLY_ENCLOSED_BY=\'"\')'.format(table_name, storage_path))
         self.conn.cursor().execute('REMOVE \'{}\''.format(storage_path))
 
     def load_raw_data_from_csv(self, report_name, table_name):
@@ -98,9 +98,9 @@ class Load:
 
 
 if __name__ == '__main__':
-    # Load(config).load(report_name='campaign_performance', table_name='LINKEDIN_CAMPAIGN_PERFORMANCE_TRAFFICBYDAY')
-    # Load(config).load(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
+    Load(config).load(report_name='campaign_performance', table_name='LINKEDIN_CAMPAIGN_PERFORMANCE_TRAFFICBYDAY')
+    Load(config).load(report_name='ad_performance', table_name='LINKEDIN_AD_PERFORMANCE_TRAFFICBYDAY')
 
-    Load(config).load_raw_data_from_csv(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
+    # Load(config).load_raw_data_from_csv(report_name='ad_performance', table_name='LINKEDIN_TEST_TABLE')
 
 
