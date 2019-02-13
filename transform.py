@@ -63,17 +63,12 @@ class Transform:
 
                 df = pd.read_csv(f'{os.getcwd()}/data/clear_{report_name}/{file}')
                 self.transform_csv_fields(df, case=report_name)
-                # df.to_csv(f'{os.getcwd()}/data/to_load_{report_name}/to_load_{file}', index=False, encoding='utf-8')
+                dataframes.append(df)
 
                 print(f'DONE WITH FILE ...')
 
-                dataframes.append(df)
-
-        # dataframes.to_csv(f'{os.getcwd()}/data/to_load_{report_name}/to_load_{report_name}', index=False, encoding='utf-8')
-        test_df = pd.concat(dataframes, sort=False, ignore_index=True)
-        test_df.to_csv(f'{os.getcwd()}/data/to_load_{report_name}/to_load_{report_name}.csv', index=False, encoding='utf-8')
-
-
+        merged_df = pd.concat(dataframes, sort=False, ignore_index=True)
+        merged_df.to_csv(f'{os.getcwd()}/data/to_load_{report_name}/to_load_{report_name}.csv', index=False, encoding='utf-8')
         print('*' * 200)
 
     def transform_csv_fields(self, df, case):
@@ -103,7 +98,6 @@ class Transform:
             self.check_df_params(df, 'AD_INTRODUCTION_TEXT', case='TRANSFORM_QUOTES')
             self.check_df_params(df, 'AD_HEADLINE', case='TRANSFORM_QUOTES')
             self.check_df_params(df, 'DSC_NAME', case='TRANSFORM_QUOTES')
-
 
     def check_df_params(self, df, param, case=None):
         if param in df:

@@ -93,7 +93,6 @@ class Load:
         print(f"Data imported successfully")
 
     def load(self, report_name='data', table_name=None):
-        # self.load_data_by_chunks(report_name, table_name)
         self.load_raw_data_from_csv(report_name, table_name)
 
 
